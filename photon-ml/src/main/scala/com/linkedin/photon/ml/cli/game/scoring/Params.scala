@@ -26,30 +26,32 @@ import com.linkedin.photon.ml.supervised.TaskType._
  * @author xazhang
  */
 case class Params(
-    inputDirs: Array[String] = Array(),
-    dateRangeOpt: Option[String] = None,
-    featureNameAndTermSetInputPath: String = "",
-    featureShardIdToFeatureSectionKeysMap: Map[String, Set[String]] = Map(),
-    randomEffectIdSet: Set[String] = Set(),
-    gameModelInputDir: String = "",
-    outputDir: String = "",
-    numFiles: Int = 1,
-    taskType: TaskType = LOGISTIC_REGRESSION,
-    applicationName: String = "Game-Scoring") {
+  inputDirs: Array[String] = Array(),
+  dateRangeOpt: Option[String] = None,
+  featureNameAndTermSetInputPath: String = "",
+  featureShardIdToFeatureSectionKeysMap: Map[String, Set[String]] = Map(),
+  randomEffectIdSet: Set[String] = Set(),
+  numPartitionsForRandomEffectModel: Int = 1,
+  gameModelInputDir: String = "",
+  outputDir: String = "",
+  numOutputFilesForScores: Int = -1,
+  taskType: TaskType = LOGISTIC_REGRESSION,
+  applicationName: String = "Game-Scoring") {
 
   override def toString: String = {
     s"Input parameters:\n" +
-        s"inputDirs: ${inputDirs.mkString(", ")}\n" +
-        s"dateRangeOpt: $dateRangeOpt\n" +
-        s"featureNameAndTermSetInputPath: $featureNameAndTermSetInputPath\n" +
-        s"featureShardIdToFeatureSectionKeysMap:\n${featureShardIdToFeatureSectionKeysMap.mapValues(_.mkString(", "))
-            .mkString("\n")}\n" +
-        s"randomEffectIdSet: $randomEffectIdSet\n" +
-        s"gameModelInputDir: $gameModelInputDir\n" +
-        s"outputDir: $outputDir\n" +
-        s"numFiles: $numFiles\n" +
-        s"taskType: $taskType\n" +
-        s"applicationName: $applicationName"
+      s"inputDirs: ${inputDirs.mkString(", ")}\n" +
+      s"dateRangeOpt: $dateRangeOpt\n" +
+      s"featureNameAndTermSetInputPath: $featureNameAndTermSetInputPath\n" +
+      s"featureShardIdToFeatureSectionKeysMap:\n${featureShardIdToFeatureSectionKeysMap.mapValues(_.mkString(", "))
+        .mkString("\n")}\n" +
+      s"randomEffectIdSet: $randomEffectIdSet\n" +
+      s"numPartitionsForRandomEffectModel: $numPartitionsForRandomEffectModel\n" +
+      s"gameModelInputDir: $gameModelInputDir\n" +
+      s"outputDir: $outputDir\n" +
+      s"numOutputFilesForScores: $numOutputFilesForScores\n" +
+      s"taskType: $taskType\n" +
+      s"applicationName: $applicationName"
   }
 }
 
@@ -94,8 +96,8 @@ object Params {
         .text(s"Output directory for the scores and log messages.")
         .action((x, c) => c.copy(outputDir = x.replaceAll(",|:", "_")))
       opt[Int]("num-files")
-        .text(s"Number of files to store the scoring results, default: ${defaultParams.numFiles}.")
-        .action((x, c) => c.copy(numFiles = x))
+        .text(s"Number of files to store the scoring results, default: ${defaultParams.numOutputFilesForScores}.")
+        .action((x, c) => c.copy(numOutputFilesForScores = x))
       opt[String]("application-name")
         .text(s"Name of this Spark application, default: ${defaultParams.applicationName}.")
         .action((x, c) => c.copy(applicationName = x))

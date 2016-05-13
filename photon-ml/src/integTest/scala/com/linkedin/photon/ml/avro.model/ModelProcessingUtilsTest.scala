@@ -17,15 +17,13 @@ package com.linkedin.photon.ml.avro.model
 import java.util.Random
 
 import scala.collection.Map
-
 import org.apache.hadoop.fs.Path
 import org.testng.annotations.{DataProvider, Test}
 import org.testng.Assert._
-
 import com.linkedin.photon.ml.avro.Constants._
 import com.linkedin.photon.ml.avro.data.NameAndTerm
 import com.linkedin.photon.ml.constants.MathConst
-import com.linkedin.photon.ml.model.{MatrixFactorizationModelTest, FixedEffectModel, Coefficients, RandomEffectModel}
+import com.linkedin.photon.ml.model.{Coefficients, FixedEffectModel, MatrixFactorizationModelTest, RandomEffectModel}
 import com.linkedin.photon.ml.test.{SparkTestUtils, TestTemplateWithTmpDir}
 
 class ModelProcessingUtilsTest extends SparkTestUtils with TestTemplateWithTmpDir {

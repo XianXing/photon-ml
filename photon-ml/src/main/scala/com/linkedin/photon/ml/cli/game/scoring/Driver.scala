@@ -29,15 +29,13 @@ import com.linkedin.photon.ml.constants.StorageLevel
 import com.linkedin.photon.ml.data.{GameDatum, KeyValueScore}
 import com.linkedin.photon.ml.SparkContextConfiguration
 import com.linkedin.photon.ml.avro.model.ModelProcessingUtils
-import com.linkedin.photon.ml.model.RandomEffectModel
+import com.linkedin.photon.ml.model.{Model, RandomEffectModel}
 import com.linkedin.photon.ml.util._
 
 
 /**
- * Driver for GAME full model scoring
- *
- * @author xazhang
- */
+  * Driver for GAME full model scoring
+  */
 class Driver(val params: Params, val sparkContext: SparkContext, val logger: PhotonLogger) {
 
   import params._
@@ -47,6 +45,12 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
   protected val hadoopConfiguration = sparkContext.hadoopConfiguration
 
   protected val isAddingIntercept = true
+
+  protected def prepareGAMEModel(): Iterable[Model] = {
+
+    val gameModel = ModelProcessingUtils.loadGameModelFromHDFS(featureShardIdToFeatureMapMap, gameModelInputDir,
+      sparkContext)
+  }
 
   /**
    * Builds feature name-and-term to index maps according to configuration
@@ -72,11 +76,11 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
   }
 
   /**
-   * Builds a GAME data set according to input data configuration
-   *
-   * @param featureShardIdToFeatureMapMap a map of shard id to feature map
-   * @return the prepared GAME dataset
-   */
+    * Builds a GAME data set according to input data configuration
+    *
+    * @param featureShardIdToFeatureMapMap a map of shard id to feature map
+    * @return the prepared GAME dataset
+    */
   protected def prepareGameDataSet(featureShardIdToFeatureMapMap: Map[String, Map[NameAndTerm, Int]])
   : (RDD[(Long, String)], RDD[(Long, GameDatum)]) = {
 
@@ -122,26 +126,23 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
   }
 
   /**
-   * Score and write results to HDFS
-   * @param featureShardIdToFeatureMapMap a map of shard id to feature map
-   * @param gameDataSet the input data set
-   * @return the scores
-   */
+    * Score the game data set with the game model
+    * @param gameModel the game model
+    * @param gameDataSet the game data set
+    * @return the scores
+    */
   //todo: make the number of files written to HDFS to be configurable
   protected def scoreGameDataSet(
-    featureShardIdToFeatureMapMap: Map[String, Map[NameAndTerm, Int]],
+    gameModel: Iterable[Model],
     gameDataSet: RDD[(Long, GameDatum)]): KeyValueScore = {
-
-    val gameModel = ModelProcessingUtils.loadGameModelFromHDFS(featureShardIdToFeatureMapMap, gameModelInputDir,
-      sparkContext)
 
     gameModel.foreach {
       case randomEffectModel: RandomEffectModel =>
         val numPartitions =
-          if (numPartitionsForRandomEffectModel < 0) {
+          if (minPartitionsForRandomEffectModel < 0) {
             randomEffectModel.coefficientsRDD.partitions.length
           } else {
-            numPartitionsForRandomEffectModel
+            minPartitionsForRandomEffectModel
           }
         randomEffectModel.coefficientsRDD.partitionBy(new HashPartitioner(numPartitions))
       case _ =>
@@ -157,8 +158,8 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
   }
 
   /**
-   * Run the driver
-   */
+    * Run the driver
+    */
   def run(): Unit = {
 
     var startTime = System.nanoTime()
@@ -174,11 +175,16 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
     startTime = System.nanoTime()
     val scores = scoreGameDataSet(featureShardIdToFeatureMapMap, gameDataSet)
     val scoredItems = uids.join(scores.scores).map { case (_, (uid, score)) => ScoredItem(uid, score) }
-    scoredItems.setName("Scored items").persist(StorageLevel.INFREQUENT_REUSE_RDD_STORAGE_LEVEL).count()
-
+    scoredItems.setName("Scored items").persist(StorageLevel.INFREQUENT_REUSE_RDD_STORAGE_LEVEL)
+    val numScoredItems = scoredItems.count()
+    logger.info(s"Number of scored items: $numScoredItems (s)\n")
     val scoresDir = new Path(outputDir, Driver.SCORES).toString
     val scoredItemsToBeSaved =
+<<<<<<< Updated upstream
       if (numOutputFilesForScores > 0 && numOutputFilesForScores != scoredItems.partitions.length) {
+=======
+      if (numOutputFilesForScores > 0 && numOutputFilesForScores != scores.scores.partitions.length) {
+>>>>>>> Stashed changes
         scoredItems.coalesce(numOutputFilesForScores)
       } else {
         scoredItems
@@ -199,8 +205,8 @@ object Driver {
   private val LOGS = "logs"
 
   /**
-   * Main entry point
-   */
+    * Main entry point
+    */
   def main(args: Array[String]): Unit = {
 
     val startTime = System.nanoTime()

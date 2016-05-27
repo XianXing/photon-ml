@@ -14,7 +14,7 @@
  */
 package com.linkedin.photon.ml.avro.model
 
-import scala.collection.Map
+import scala.collection.{Map, Set}
 
 import breeze.linalg.Vector
 import org.apache.hadoop.conf.Configuration
@@ -35,7 +35,7 @@ import com.linkedin.photon.ml.util.{IOUtils, Utils}
  * using Avro format.
  */
 //TODO: Change the scope of all functions in the object to [[com.linkedin.photon.ml.avro]] after Avro related
-//classes/functons are decoupled from the rest of code
+//classes/functions are decoupled from the rest of code
 object ModelProcessingUtils {
 
   import com.linkedin.photon.ml.avro.Constants._

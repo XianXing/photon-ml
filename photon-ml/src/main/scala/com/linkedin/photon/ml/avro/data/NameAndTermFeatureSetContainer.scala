@@ -35,7 +35,7 @@ import com.linkedin.photon.ml.util._
  */
 //TODO: Change the scope to [[com.linkedin.photon.ml.avro]] after Avro related classes/functons are decoupled from the
 //rest of code
-protected[ml] class NameAndTermFeatureSetContainer(nameAndTermFeatureSets: Map[String, Set[NameAndTerm]]) {
+protected[ml] class NameAndTermFeatureSetContainer private (nameAndTermFeatureSets: Map[String, Set[NameAndTerm]]) {
 
   /**
    * Get the map from feature name of type [[NameAndTerm]] to feature index of type [[Int]] based on the specified

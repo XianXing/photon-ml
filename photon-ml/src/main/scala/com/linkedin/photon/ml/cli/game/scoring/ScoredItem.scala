@@ -19,4 +19,15 @@ package com.linkedin.photon.ml.cli.game.scoring
   * @param uid A uid that can be used to uniquely characterize the scored item
   * @param predictionScore Score predicted by the model
   */
-case class ScoredItem(uid: String, predictionScore: Double)
+case class ScoredItem(uid: String, predictionScore: Double) {
+  override def equals(that: Any): Boolean = {
+    that match {
+      case other: ScoredItem => uid == other.uid && predictionScore == other.predictionScore
+      case _ => false
+    }
+  }
+
+  override def hashCode(): Int = {
+    uid.hashCode() ^ predictionScore.hashCode()
+  }
+}

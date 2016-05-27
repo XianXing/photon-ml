@@ -28,7 +28,6 @@ import com.linkedin.photon.ml.cli.game.scoring.ScoredItem
   */
 object ScoreProcessingUtils {
 
-<<<<<<< Updated upstream
   /**
     * Load the scored items of type [[ScoredItem]] from the given input directory on HDFS
     * @param inputDir The given input directory
@@ -51,8 +50,6 @@ object ScoreProcessingUtils {
     * @param modelId The model's id that used to compute the scores
     * @param outputDir The given output directory
     */
-=======
->>>>>>> Stashed changes
   protected[ml] def saveScoredItemsToHDFS(scoredItems: RDD[ScoredItem], modelId: String, outputDir: String): Unit = {
     val scoringResultAvros = scoredItems.map { case ScoredItem(uid, predictionScore) =>
       val avroFile = ScoringResultAvro.newBuilder().setUid(uid).setModelId(modelId).setPredictionScore(predictionScore)

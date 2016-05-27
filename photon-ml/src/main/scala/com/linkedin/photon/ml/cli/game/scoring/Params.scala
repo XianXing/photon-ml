@@ -20,7 +20,7 @@ import scopt.OptionParser
 
 /**
   * Command line arguments for GAME scoring driver
- *
+  *
   * @param inputDirs Input directories of data to be scored. Multiple input directories are also accepted if they are
   *                  separated by commas, e.g., inputDir1,inputDir2,inputDir3.
   * @param dateRangeOpt: Date range for the scoring data represented in the form start.date-end.date,
@@ -40,6 +40,7 @@ case class Params(
   inputDirs: Array[String] = Array(),
   dateRangeOpt: Option[String] = None,
   featureNameAndTermSetInputPath: String = "",
+  featureShardIdToFeatureSectionKeysMap: Map[String, Set[String]] = Map(),
   randomEffectIdSet: Set[String] = Set(),
   minPartitionsForRandomEffectModel: Int = 1,
   gameModelInputDir: String = "",

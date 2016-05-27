@@ -28,14 +28,13 @@ import com.linkedin.photon.ml.avro.data.ScoreProcessingUtils
 import com.linkedin.photon.ml.constants.StorageLevel
 import com.linkedin.photon.ml.data.{GameDatum, KeyValueScore}
 import com.linkedin.photon.ml.SparkContextConfiguration
-import com.linkedin.photon.ml.avro.model.ModelProcessingUtils
 import com.linkedin.photon.ml.model.{Model, RandomEffectModel}
 import com.linkedin.photon.ml.util._
 
 
 /**
-  * Driver for GAME full model scoring
-  */
+ * Driver for GAME full model scoring
+ */
 class Driver(val params: Params, val sparkContext: SparkContext, val logger: PhotonLogger) {
 
   import params._
@@ -45,12 +44,6 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
   protected val hadoopConfiguration = sparkContext.hadoopConfiguration
 
   protected val isAddingIntercept = true
-
-  protected def prepareGAMEModel(): Iterable[Model] = {
-
-    val gameModel = ModelProcessingUtils.loadGameModelFromHDFS(featureShardIdToFeatureMapMap, gameModelInputDir,
-      sparkContext)
-  }
 
   /**
    * Builds feature name-and-term to index maps according to configuration
@@ -76,11 +69,11 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
   }
 
   /**
-    * Builds a GAME data set according to input data configuration
-    *
-    * @param featureShardIdToFeatureMapMap a map of shard id to feature map
-    * @return the prepared GAME dataset
-    */
+   * Builds a GAME data set according to input data configuration
+   *
+   * @param featureShardIdToFeatureMapMap a map of shard id to feature map
+   * @return the prepared GAME dataset
+   */
   protected def prepareGameDataSet(featureShardIdToFeatureMapMap: Map[String, Map[NameAndTerm, Int]])
   : (RDD[(Long, String)], RDD[(Long, GameDatum)]) = {
 
@@ -180,11 +173,7 @@ class Driver(val params: Params, val sparkContext: SparkContext, val logger: Pho
     logger.info(s"Number of scored items: $numScoredItems (s)\n")
     val scoresDir = new Path(outputDir, Driver.SCORES).toString
     val scoredItemsToBeSaved =
-<<<<<<< Updated upstream
       if (numOutputFilesForScores > 0 && numOutputFilesForScores != scoredItems.partitions.length) {
-=======
-      if (numOutputFilesForScores > 0 && numOutputFilesForScores != scores.scores.partitions.length) {
->>>>>>> Stashed changes
         scoredItems.coalesce(numOutputFilesForScores)
       } else {
         scoredItems

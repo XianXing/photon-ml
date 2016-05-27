@@ -27,9 +27,15 @@ import org.apache.spark.SparkContext
 import com.linkedin.photon.ml.algorithm._
 import com.linkedin.photon.ml.avro.data.{DataProcessingUtils, NameAndTerm, NameAndTermFeatureSetContainer}
 import com.linkedin.photon.ml.evaluation._
+<<<<<<< HEAD
 import com.linkedin.photon.ml.model.Model
 import com.linkedin.photon.ml.optimization.game.{FactoredRandomEffectOptimizationProblem, OptimizationProblem,
   RandomEffectOptimizationProblem}
+=======
+import com.linkedin.photon.ml.model.GAMEModel
+import com.linkedin.photon.ml.optimization.game.{
+  FactoredRandomEffectOptimizationProblem, RandomEffectOptimizationProblem, OptimizationProblem}
+>>>>>>> master
 import com.linkedin.photon.ml.projector.IdentityProjection
 import com.linkedin.photon.ml.SparkContextConfiguration
 import com.linkedin.photon.ml.avro.model.ModelProcessingUtils
@@ -313,13 +319,12 @@ final class Driver(val params: Params, val sparkContext: SparkContext, val logge
    * @param dataSets the training datasets
    * @param trainingEvaluator the training evaluator
    * @param validatingDataAndEvaluatorOption optional validation dataset and evaluator
-   * @return trained GAME models
+   * @return trained GAME model
    */
   protected[training] def train(
       dataSets: Map[String, DataSet[_ <: DataSet[_]]],
       trainingEvaluator: Evaluator,
-      validatingDataAndEvaluatorOption: Option[(RDD[(Long, GameDatum)], Evaluator)]):
-    Map[String, Map[String, Model]] = {
+      validatingDataAndEvaluatorOption: Option[(RDD[(Long, GameDatum)], Evaluator)]): Map[String, GAMEModel] = {
 
     val gameModels = for (
         fixedEffectOptimizationConfiguration <- fixedEffectOptimizationConfigurations;
@@ -400,28 +405,19 @@ final class Driver(val params: Params, val sparkContext: SparkContext, val logge
   protected[training] def saveModelToHDFS(
       featureShardIdToFeatureMapMap: Map[String, Map[NameAndTerm, Int]],
       validatingDataAndEvaluatorOption: Option[(RDD[(Long, GameDatum)], Evaluator)],
-      gameModelsMap: Map[String, Map[String, Model]]) {
-
-    val combinedGameModelsMap = gameModelsMap.map { case (modelName, gameModel) =>
-      val collapsedGameModel = ModelProcessingUtils.collapseGameModel(gameModel, sparkContext).values
-      collapsedGameModel.foreach {
-        case rddLike: RDDLike => rddLike.persistRDD(StorageLevel.INFREQUENT_REUSE_RDD_STORAGE_LEVEL)
-        case _ =>
-      }
-      (modelName, collapsedGameModel)
-    }
+      gameModelsMap: Map[String, GAMEModel]) {
 
     // Write the best model to HDFS
     validatingDataAndEvaluatorOption match {
       case Some((validatingData, evaluator)) =>
-        val (bestModelConfig, evaluationResult) =
-          combinedGameModelsMap
-              .mapValues(_.map(_.score(validatingData))
-              .reduce(_ + _).scores).mapValues(evaluator.evaluate)
-              .reduce((result1, result2) => if (result1._2 > result2._2) result1 else result2)
-        val bestGameModel = combinedGameModelsMap(bestModelConfig)
+        val (bestModelConfig, evaluationResult) = gameModelsMap.mapValues(_.score(validatingData).scores)
+          .mapValues(evaluator.evaluate)
+          .reduce((result1, result2) => if (evaluator.betterThan(result1._2, result2._2)) result1 else result2)
+
+        val bestGameModel = gameModelsMap.get(bestModelConfig).get
         logger.info(s"The selected model has the following config:\n$bestModelConfig\nModel summary:" +
-            s"\n${bestGameModel.map(_.toSummaryString).mkString("\n")}\n\nEvaluation result is : $evaluationResult")
+          s"\n${bestGameModel.toSummaryString}\n\nEvaluation result is : $evaluationResult")
+
         val modelOutputDir = new Path(outputDir, "best").toString
         Utils.createHDFSDir(modelOutputDir, hadoopConfiguration)
         val modelSpecDir = new Path(modelOutputDir, "model-spec").toString
@@ -435,7 +431,7 @@ final class Driver(val params: Params, val sparkContext: SparkContext, val logge
     // Write all models to HDFS
     if (modelOutputMode == ModelOutputMode.ALL) {
       var modelIdx = 0
-      combinedGameModelsMap.foreach { case (modelConfig, gameModel) =>
+      gameModelsMap.foreach { case (modelConfig, gameModel) =>
         val modelOutputDir = new Path(outputDir, s"all/$modelIdx").toString
         Utils.createHDFSDir(modelOutputDir, hadoopConfiguration)
         val modelSpecDir = new Path(modelOutputDir, "model-spec").toString
